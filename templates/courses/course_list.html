@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}All Courses - DevOps MasterClass{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-4">DevOps Courses</h1>
+        <p class="text-gray-600">Master the complete DevOps toolkit through our structured learning path</p>
+    </div>
+
+    <!-- Phase Navigation -->
+    <div class="mb-8">
+        <div class="flex space-x-2 overflow-x-auto pb-4">
+            <a href="#all-courses" class="bg-indigo-600 text-white px-4 py-2 rounded-lg whitespace-nowrap">
+                All Courses
+            </a>
+            {% for phase_num, technologies in technologies_by_phase.items %}
+            <a href="#phase-{{ phase_num }}" class="bg-white border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 whitespace-nowrap">
+                Phase {{ phase_num }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Courses Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="all-courses">
+        {% for course in courses %}
+        <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition duration-300">
+            <!-- Course Header -->
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="px-3 py-1 bg-indigo-100 text-indigo-800 text-sm font-medium rounded-full">
+                        Phase {{ course.technology.phase }}
+                    </span>
+                    <span class="px-3 py-1 bg-{{ course.difficulty }}-100 text-{{ course.difficulty }}-800 text-sm font-medium rounded-full">
+                        {{ course.difficulty|title }}
+                    </span>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ course.title }}</h3>
+                <p class="text-gray-600 text-sm mb-4">{{ course.description|truncatewords:20 }}</p>
+                
+                <!-- Progress Bar (if user is enrolled) -->
+                {% if user.is_authenticated %}
+                    {% with progress=user.get_course_progress.course %}
+                    {% if progress %}
+                    <div class="mb-4">
+                        <div class="flex justify-between text-xs text-gray-500 mb-1">
+                            <span>Progress</span>
+                            <span>{{ progress.progress_percentage }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-600 h-2 rounded-full" style="width: {{ progress.progress_percentage }}%"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                {% endif %}
+                
+                <!-- Technology Info -->
+                <div class="flex items-center text-sm text-gray-500 mb-4">
+                    <i class="fas fa-clock mr-1"></i>
+                    <span class="mr-4">{{ course.estimated_duration }}h</span>
+                    <i class="fas fa-layer-group mr-1"></i>
+                    <span>{{ course.modules.count }} modules</span>
+                    <i class="fas fa-book-open ml-4 mr-1"></i>
+                    <span>{{ course.lessons_count }} lessons</span>
+                </div>
+            </div>
+
+            <!-- Course Footer -->
+            <div class="p-6 bg-gray-50">
+                <div class="flex justify-between items-center">
+                    <a href="{% url 'course_detail' course.pk %}" 
+                       class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-300">
+                        {% if user.is_authenticated and user.get_course_progress.course %}Continue{% else %}Start Course{% endif %}
+                    </a>
+                    <a href="{% url 'technology_detail' course.technology.pk %}" 
+                       class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                        Tech Details →
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-3 text-center py-12">
+            <i class="fas fa-book-open text-4xl text-gray-400 mb-4"></i>
+            <h3 class="text-xl font-semibold text-gray-600">No courses available yet</h3>
+            <p class="text-gray-500">Check back soon for new courses!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
