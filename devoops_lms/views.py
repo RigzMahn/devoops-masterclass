@@ -1,5 +1,6 @@
-from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import TemplateView
+
 
 class HomeView(TemplateView):
     template_name = 'home.html'
@@ -12,8 +13,16 @@ class HomeView(TemplateView):
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'dashboard.html'
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Add user progress data later
+        return context
+
+class RoadmapView(TemplateView):
+    template_name = 'roadmap.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Add roadmap data later
         return context

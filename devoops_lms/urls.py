@@ -12,6 +12,8 @@ urlpatterns = [
     path('courses/', include('courses.urls')),
     path('users/', include('users.urls')),
     path('ckeditor5/', include('django_ckeditor_5.urls')),
+    path('accounts/', include('allauth.urls')),
+    path('roadmap/', views.RoadmapView.as_view(), name='roadmap'),
 ]
 
 if settings.DEBUG:

@@ -133,6 +133,7 @@ class CodeExample(models.Model):
     ]
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='code_examples')
     title = models.CharField(max_length=200)
+    description = models.TextField(blank=True, help_text="Brief description of the code example")
     code = models.TextField()
     language = models.CharField(max_length=50, choices=LANGUAGE_CHOICES, default='python')
     explanation = CKEditor5Field('Explanation', config_name='default', blank=True)
