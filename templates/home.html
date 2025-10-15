@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - DevOps MasterClass LMS{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="gradient-bg text-white">
+    <div class="max-w-7xl mx-auto px-4 py-24">
+        <div class="text-center">
+            <h1 class="text-5xl font-bold mb-6">Master DevOps Technologies</h1>
+            <p class="text-xl mb-8 max-w-3xl mx-auto">
+                Comprehensive learning platform covering Git, Docker, Kubernetes, Terraform, and more. 
+                Follow our structured roadmap to become a DevOps expert.
+            </p>
+            <div class="flex justify-center space-x-4">
+                <a href="{% url 'roadmap' %}" class="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition duration-300">
+                    View Learning Roadmap
+                </a>
+                <a href="{% url 'course_list' %}" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-indigo-600 transition duration-300">
+                    Browse Courses
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="bg-white py-16">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+            <div class="p-6">
+                <div class="text-4xl font-bold text-indigo-600 mb-2">{{ technologies_count }}+</div>
+                <div class="text-gray-600">Technologies Covered</div>
+            </div>
+            <div class="p-6">
+                <div class="text-4xl font-bold text-indigo-600 mb-2">{{ total_lessons }}+</div>
+                <div class="text-gray-600">Hands-on Lessons</div>
+            </div>
+            <div class="p-6">
+                <div class="text-4xl font-bold text-indigo-600 mb-2">6</div>
+                <div class="text-gray-600">Learning Phases</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Learning Phases Preview -->
+<section class="bg-gray-50 py-16">
+    <div class="max-w-7xl mx-auto px-4">
+        <h2 class="text-3xl font-bold text-center mb-12">Structured Learning Path</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Phase 1 -->
+            <div class="bg-white rounded-lg shadow-md phase-card p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold mr-3">1</div>
+                    <h3 class="text-xl font-semibold">Version Control & Collaboration</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Master Git, GitHub, and GitLab for efficient team collaboration and code management.</p>
+                <ul class="text-sm text-gray-500 space-y-1">
+                    <li>• Git Fundamentals</li>
+                    <li>• GitHub Workflows</li>
+                    <li>• GitLab CI/CD</li>
+                </ul>
+            </div>
+
+            <!-- Phase 2 -->
+            <div class="bg-white rounded-lg shadow-md phase-card p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold mr-3">2</div>
+                    <h3 class="text-xl font-semibold">Containerization & Orchestration</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Learn Docker and Kubernetes for building, shipping, and running distributed applications.</p>
+                <ul class="text-sm text-gray-500 space-y-1">
+                    <li>• Docker Containers</li>
+                    <li>• Kubernetes Clusters</li>
+                    <li>• Container Orchestration</li>
+                </ul>
+            </div>
+
+            <!-- Phase 3 -->
+            <div class="bg-white rounded-lg shadow-md phase-card p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-3">3</div>
+                    <h3 class="text-xl font-semibold">Infrastructure as Code</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Automate infrastructure provisioning with Terraform and configuration management with Ansible.</p>
+                <ul class="text-sm text-gray-500 space-y-1">
+                    <li>• Terraform Modules</li>
+                    <li>• Ansible Playbooks</li>
+                    <li>• Cloud Automation</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="text-center mt-8">
+            <a href="{% url 'roadmap' %}" class="text-indigo-600 hover:text-indigo-800 font-semibold">
+                View Complete Roadmap <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
