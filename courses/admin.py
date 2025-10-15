@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.db import models
 from django.utils.html import format_html
 from django_ckeditor_5.widgets import CKEditor5Widget
+from .models import InteractiveExercise, UserExerciseAttempt
 
 from .models import CodeExample, Course, Lesson, Module, Technology, WorkflowDiagram
 
@@ -147,3 +148,63 @@ class CodeExampleAdmin(admin.ModelAdmin):
         css = {
             'all': ('django_ckeditor_5/admin.css',)
         }
+        
+@admin.register(InteractiveExercise)
+class InteractiveExerciseAdmin(admin.ModelAdmin):
+    list_display = ['title', 'lesson', 'exercise_type', 'points', 'order', 'get_total_attempts', 'get_success_rate']
+    list_filter = ['exercise_type', 'lesson__module__course']
+    ordering = ['lesson', 'order']
+    search_fields = ['title', 'instructions']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('lesson', 'title', 'exercise_type', 'instructions')
+        }),
+        ('Code Exercise Settings', {
+            'fields': ('initial_code', 'solution_code', 'test_cases'),
+            'classes': ('collapse',)
+        }),
+        ('Quiz Exercise Settings', {
+            'fields': ('options',),
+            'classes': ('collapse',)
+        }),
+        ('Settings', {
+            'fields': ('points', 'order')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_total_attempts(self, obj):
+        return obj.get_total_attempts()
+    get_total_attempts.short_description = 'Total Attempts'
+    
+    def get_success_rate(self, obj):
+        return f"{obj.get_success_rate():.1f}%"
+    get_success_rate.short_description = 'Success Rate'
+
+@admin.register(UserExerciseAttempt)
+class UserExerciseAttemptAdmin(admin.ModelAdmin):
+    list_display = ['user', 'exercise', 'is_correct', 'score', 'attempted_at', 'completed_at']
+    list_filter = ['is_correct', 'exercise__lesson__module__course', 'attempted_at']
+    ordering = ['-attempted_at']
+    search_fields = ['user__username', 'exercise__title']
+    readonly_fields = ['attempted_at', 'completed_at']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('user', 'exercise')
+        }),
+        ('Submission Details', {
+            'fields': ('code_submission', 'answers')
+        }),
+        ('Results', {
+            'fields': ('is_correct', 'score')
+        }),
+        ('Timestamps', {
+            'fields': ('attempted_at', 'completed_at')
+        }),
+    )

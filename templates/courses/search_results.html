@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Search Results - DevOps MasterClass{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Search Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-4">Search Results</h1>
+        
+        <!-- Search Box -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+            <form method="get" action="{% url 'search' %}" class="flex space-x-4">
+                <div class="flex-1 relative">
+                    <input type="text" 
+                           name="q" 
+                           value="{{ search_query }}"
+                           placeholder="Search courses, technologies..." 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <button type="submit" class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <button type="submit" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition duration-300">
+                    Search
+                </button>
+            </form>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+            <div class="flex flex-wrap gap-4">
+                <!-- Technology Filter -->
+                <select name="technology" onchange="this.form.submit()" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <option value="">All Technologies</option>
+                    {% for tech_id, tech_name in technologies %}
+                    <option value="{{ tech_id }}" {% if technology_filter == tech_id %}selected{% endif %}>
+                        {{ tech_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+
+                <!-- Difficulty Filter -->
+                <select name="difficulty" onchange="this.form.submit()" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <option value="">All Difficulties</option>
+                    <option value="beginner" {% if difficulty_filter == 'beginner' %}selected{% endif %}>Beginner</option>
+                    <option value="intermediate" {% if difficulty_filter == 'intermediate' %}selected{% endif %}>Intermediate</option>
+                    <option value="advanced" {% if difficulty_filter == 'advanced' %}selected{% endif %}>Advanced</option>
+                </select>
+
+                <!-- Duration Filter -->
+                <select name="duration" onchange="this.form.submit()" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <option value="">Any Duration</option>
+                    {% for duration_id, duration_name in durations %}
+                    <option value="{{ duration_id }}" {% if duration_filter == duration_id %}selected{% endif %}>
+                        {{ duration_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+
+                <!-- Clear Filters -->
+                <a href="{% url 'search' %}?q={{ search_query|urlencode }}" 
+                   class="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-300">
+                    Clear Filters
+                </a>
+            </div>
+        </div>
+
+        <!-- Results Summary -->
+        <div class="flex justify-between items-center mb-6">
+            <p class="text-gray-600">
+                Found <span class="font-semibold">{{ total_results }}</span> course{{ total_results|pluralize }} 
+                {% if search_query %}for "{{ search_query }}"{% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Results Grid -->
+    {% if courses %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {% for course in courses %}
+        <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition duration-300">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="px-3 py-1 bg-indigo-100 text-indigo-800 text-sm font-medium rounded-full">
+                        Phase {{ course.technology.phase }}
+                    </span>
+                    <span class="px-3 py-1 bg-{{ course.difficulty }}-100 text-{{ course.difficulty }}-800 text-sm font-medium rounded-full">
+                        {{ course.difficulty|title }}
+                    </span>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ course.title }}</h3>
+                <p class="text-gray-600 text-sm mb-4">{{ course.description|truncatewords:20 }}</p>
+                
+                <div class="flex items-center text-sm text-gray-500 mb-4">
+                    <i class="fas fa-clock mr-1"></i>
+                    <span class="mr-4">{{ course.estimated_duration }}h</span>
+                    <i class="fas fa-layer-group mr-1"></i>
+                    <span>{{ course.modules.count }} modules</span>
+                </div>
+            </div>
+
+            <div class="p-6 bg-gray-50">
+                <div class="flex justify-between items-center">
+                    <a href="{% url 'course_detail' course.pk %}" 
+                       class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-300">
+                        View Course
+                    </a>
+                    <a href="{% url 'technology_detail' course.technology.pk %}" 
+                       class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                        Tech Details →
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="mt-12 flex justify-center">
+        <nav class="flex items-center space-x-2">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}&q={{ search_query|urlencode }}" 
+               class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-300">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <span class="px-3 py-2 bg-indigo-600 text-white rounded-lg">{{ num }}</span>
+            {% else %}
+            <a href="?page={{ num }}&q={{ search_query|urlencode }}" 
+               class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-300">
+                {{ num }}
+            </a>
+            {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&q={{ search_query|urlencode }}" 
+               class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-300">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- No Results -->
+    <div class="text-center py-16">
+        <i class="fas fa-search text-6xl text-gray-400 mb-4"></i>
+        <h3 class="text-2xl font-semibold text-gray-600 mb-4">No courses found</h3>
+        <p class="text-gray-500 mb-8 max-w-md mx-auto">
+            {% if search_query %}
+            We couldn't find any courses matching "{{ search_query }}". Try different keywords or browse all courses.
+            {% else %}
+            No courses match your current filters. Try adjusting your search criteria.
+            {% endif %}
+        </p>
+        <div class="space-x-4">
+            <a href="{% url 'course_list' %}" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition duration-300">
+                Browse All Courses
+            </a>
+            <a href="{% url 'search' %}" class="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition duration-300">
+                Clear Search
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Search suggestions functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('input[name="q"]');
+    let suggestionsContainer;
+    
+    // Create suggestions container
+    const createSuggestionsContainer = () => {
+        suggestionsContainer = document.createElement('div');
+        suggestionsContainer.className = 'absolute z-50 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 hidden';
+        searchInput.parentNode.appendChild(suggestionsContainer);
+    };
+    
+    // Fetch search suggestions
+    const fetchSuggestions = async (query) => {
+        if (query.length < 2) {
+            suggestionsContainer.classList.add('hidden');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/courses/search/suggestions/?q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            
+            if (data.suggestions.length > 0) {
+                showSuggestions(data.suggestions);
+            } else {
+                suggestionsContainer.classList.add('hidden');
+            }
+        } catch (error) {
+            console.error('Error fetching suggestions:', error);
+        }
+    };
+    
+    // Show suggestions
+    const showSuggestions = (suggestions) => {
+        suggestionsContainer.innerHTML = '';
+        
+        suggestions.forEach(suggestion => {
+            const item = document.createElement('a');
+            item.href = suggestion.url;
+            item.className = 'flex items-center space-x-3 p-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0';
+            item.innerHTML = `
+                <i class="fas fa-${suggestion.type === 'course' ? 'book' : 'tools'} text-gray-400"></i>
+                <span>${suggestion.text}</span>
+                <span class="text-xs text-gray-500 ml-auto capitalize">${suggestion.type}</span>
+            `;
+            suggestionsContainer.appendChild(item);
+        });
+        
+        suggestionsContainer.classList.remove('hidden');
+    };
+    
+    // Initialize
+    createSuggestionsContainer();
+    
+    // Event listeners
+    searchInput.addEventListener('input', (e) => {
+        fetchSuggestions(e.target.value);
+    });
+    
+    searchInput.addEventListener('focus', () => {
+        if (suggestionsContainer.innerHTML) {
+            suggestionsContainer.classList.remove('hidden');
+        }
+    });
+    
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!searchInput.parentNode.contains(e.target)) {
+            suggestionsContainer.classList.add('hidden');
+        }
+    });
+});
+</script>
+{% endblock %}

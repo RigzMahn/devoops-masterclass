@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Dashboard - DevOps MasterClass{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Welcome Header -->
+    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-8 text-white mb-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">Welcome back, {{ user.username }}! 👋</h1>
+                <p class="text-indigo-100 text-lg">
+                    {% if current_phase %}
+                    You're mastering Phase {{ current_phase }} of your DevOps journey
+                    {% else %}
+                    Ready to continue your DevOps learning journey?
+                    {% endif %}
+                </p>
+            </div>
+            <div class="mt-4 md:mt-0 bg-white bg-opacity-20 rounded-lg p-4">
+                <div class="flex items-center space-x-4">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold">{{ streak_days }}</div>
+                        <div class="text-indigo-100 text-sm">Day Streak</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold">{{ completed_courses }}</div>
+                        <div class="text-indigo-100 text-sm">Courses Completed</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-8">
+            <!-- Progress Overview -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-6">Learning Progress</h2>
+                
+                <!-- Overall Progress -->
+                <div class="mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Overall Completion</h3>
+                        <span class="text-2xl font-bold text-indigo-600">{{ completion_rate|floatformat:0 }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-4">
+                        <div class="bg-indigo-600 h-4 rounded-full transition-all duration-500" 
+                             style="width: {{ completion_rate }}%"></div>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-600 mt-2">
+                        <span>{{ enrolled_courses }} enrolled</span>
+                        <span>{{ completed_courses }} completed</span>
+                    </div>
+                </div>
+
+                <!-- Course Progress Grid -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Your Courses</h3>
+                    {% for progress in user_progress %}
+                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-300">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <h4 class="font-semibold text-gray-900">{{ progress.course.title }}</h4>
+                                <p class="text-sm text-gray-600">{{ progress.course.technology.name }}</p>
+                            </div>
+                            <span class="px-3 py-1 bg-indigo-100 text-indigo-800 text-sm font-medium rounded-full">
+                                Phase {{ progress.course.technology.phase }}
+                            </span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 mr-4">
+                                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                    <span>Progress</span>
+                                    <span>{{ progress.progress_percentage }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-green-600 h-2 rounded-full transition-all duration-500" 
+                                         style="width: {{ progress.progress_percentage }}%"></div>
+                                </div>
+                            </div>
+                            <a href="{% url 'course_detail' progress.course.id %}" 
+                               class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-300 text-sm">
+                                {% if progress.progress_percentage == 0 %}Start{% else %}Continue{% endif %}
+                            </a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-book-open text-4xl text-gray-400 mb-4"></i>
+                        <h4 class="text-lg font-semibold text-gray-600">No courses started yet</h4>
+                        <p class="text-gray-500 mb-4">Begin your DevOps journey by enrolling in a course</p>
+                        <a href="{% url 'course_list' %}" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition duration-300">
+                            Browse Courses
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-6">Recent Activity</h2>
+                <div class="space-y-4">
+                    {% for activity in recent_activity %}
+                    <div class="flex items-center space-x-4 p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
+                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-book-open text-green-600"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-gray-900">
+                                <strong>{{ activity.course.title }}</strong>
+                            </p>
+                            <p class="text-sm text-gray-600">
+                                Progress updated to {{ activity.progress_percentage }}%
+                            </p>
+                            <p class="text-xs text-gray-500">{{ activity.updated_at|timesince }} ago</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-history text-3xl mb-3"></i>
+                        <p>No recent activity</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-8">
+            <!-- Learning Stats -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-6">Learning Statistics</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-clock text-blue-600"></i>
+                            <span class="text-gray-700">Total Learning</span>
+                        </div>
+                        <span class="font-semibold text-blue-600">{{ total_learning_hours }}h</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-check-circle text-green-600"></i>
+                            <span class="text-gray-700">Lessons Completed</span>
+                        </div>
+                        <span class="font-semibold text-green-600">{{ total_lessons_completed }}</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-trophy text-purple-600"></i>
+                            <span class="text-gray-700">Exercise Success</span>
+                        </div>
+                        <span class="font-semibold text-purple-600">{{ exercise_success_rate }}%</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-layer-group text-orange-600"></i>
+                            <span class="text-gray-700">Current Phase</span>
+                        </div>
+                        <span class="font-semibold text-orange-600">{{ current_phase }}/6</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-6">Quick Actions</h3>
+                <div class="space-y-3">
+                    <a href="{% url 'course_list' %}" 
+                       class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition duration-300">
+                        <i class="fas fa-search text-indigo-600"></i>
+                        <span class="text-gray-700">Browse Courses</span>
+                    </a>
+                    
+                    <a href="{% url 'roadmap' %}" 
+                       class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition duration-300">
+                        <i class="fas fa-map text-green-600"></i>
+                        <span class="text-gray-700">View Roadmap</span>
+                    </a>
+                    
+                    {% if user_progress %}
+                    <a href="{% url 'lesson_detail' user_progress.0.last_accessed_lesson.id %}" 
+                       class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition duration-300">
+                        <i class="fas fa-play text-blue-600"></i>
+                        <span class="text-gray-700">Continue Learning</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Achievement Badges -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-6">Achievements</h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-star text-yellow-600 text-xl"></i>
+                        </div>
+                        <span class="text-xs text-gray-600">First Lesson</span>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-fire text-blue-600 text-xl"></i>
+                        </div>
+                        <span class="text-xs text-gray-600">3-Day Streak</span>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-check text-green-600 text-xl"></i>
+                        </div>
+                        <span class="text-xs text-gray-600">Course Complete</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

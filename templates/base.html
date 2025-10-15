@@ -1,36 +1,39 @@
 <!DOCTYPE html>
 <html lang="en" class="h-full bg-white">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}DevOps MasterClass LMS{% endblock %}</title>
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+
     <!-- Highlight.js for code syntax -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-    
+
     <!-- Mermaid.js for diagrams -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
-    
+
     <!-- Custom CSS -->
     <style>
         .gradient-bg {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
+
         .phase-card {
             transition: all 0.3s ease;
         }
+
         .phase-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
-        
+
         /* Mermaid diagram styling */
         .mermaid {
             background: white;
@@ -39,7 +42,7 @@
             margin: 1rem 0;
             border: 1px solid #e5e7eb;
         }
-        
+
         /* Interactive diagram controls */
         .diagram-controls {
             background: #f8fafc;
@@ -48,19 +51,19 @@
             padding: 0.75rem;
             margin-bottom: 1rem;
         }
-        
+
         /* Progress animations */
         .progress-ring {
             transition: stroke-dashoffset 0.3s ease;
         }
-        
+
         /* Code editor styling */
         .code-editor {
             border: 1px solid #e5e7eb;
             border-radius: 0.5rem;
             overflow: hidden;
         }
-        
+
         .code-header {
             background: #1f2937;
             color: white;
@@ -68,7 +71,7 @@
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
             font-size: 0.875rem;
         }
-        
+
         .code-content {
             background: #111827;
             color: #e5e7eb;
@@ -80,6 +83,7 @@
         }
     </style>
 </head>
+
 <body class="h-full">
     <!-- Navigation -->
     <nav class="bg-white shadow-lg sticky top-0 z-50">
@@ -91,17 +95,36 @@
                         <span class="font-bold text-xl text-gray-800">DevOps MasterClass</span>
                     </a>
                 </div>
-                
+
+                <!-- In the navigation section -->
                 <div class="flex items-center space-x-4">
-                    <a href="{% url 'home' %}" class="text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Home</a>
-                    <a href="{% url 'course_list' %}" class="text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Courses</a>
-                    <a href="{% url 'roadmap' %}" class="text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Roadmap</a>
-                    
+                    <!-- Search Box -->
+                    <div class="relative hidden md:block">
+                        <form method="get" action="{% url 'search' %}" class="flex">
+                            <input type="text" name="q" placeholder="Search courses..."
+                                class="w-64 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <button type="submit"
+                                class="bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg px-4 hover:bg-gray-200 transition duration-300">
+                                <i class="fas fa-search text-gray-600"></i>
+                            </button>
+                        </form>
+                    </div>
+
+                    <a href="{% url 'home' %}"
+                        class="text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Home</a>
+                    <a href="{% url 'course_list' %}"
+                        class="text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Courses</a>
+                    <a href="{% url 'roadmap' %}"
+                        class="text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Roadmap</a>
+
                     {% if user.is_authenticated %}
-                        <a href="{% url 'dashboard' %}" class="text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
-                        <a href="{% url 'logout' %}" class="text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Logout</a>
+                    <a href="{% url 'dashboard' %}"
+                        class="text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+                    <a href="{% url 'account_logout' %}"
+                        class="text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Logout</a>
                     {% else %}
-                        <a href="{% url 'account_login' %}" class="text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Login</a>
+                    <a href="{% url 'account_login' %}"
+                        class="text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Login</a>
                     {% endif %}
                 </div>
             </div>
@@ -155,7 +178,8 @@
             }
         });
     </script>
-    
+
     {% block extra_scripts %}{% endblock %}
 </body>
+
 </html>

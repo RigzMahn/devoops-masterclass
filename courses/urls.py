@@ -17,4 +17,6 @@ urlpatterns = [
     path('exercise/<int:exercise_id>/validate/', views.validate_exercise_solution, name='validate_exercise'),
     path('exercise/<int:exercise_id>/quiz/', views.submit_quiz_answer, name='submit_quiz_answer'),
     path('exercise/<int:pk>/', views.ExerciseDetailView.as_view(), name='exercise_detail'),
+    path('search/', views.SearchView.as_view(), name='search'),
+    path('search/suggestions/', views.search_suggestions, name='search_suggestions'),
 ]

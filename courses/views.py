@@ -3,23 +3,18 @@ import json
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Prefetch
+from django.db.models import Count, Prefetch, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView, TemplateView
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
-from django.utils import timezone
-from django.http import JsonResponse
 import json
 import re
 from .models import InteractiveExercise, UserExerciseAttempt
 from users.models import UserProgress
 
-from users.models import UserProgress
 
 from .models import (
     Course,
@@ -457,3 +452,101 @@ class ExerciseDetailView(LoginRequiredMixin, DetailView):
             exercise=self.object
         ).first()
         return context
+
+
+class SearchView(ListView):
+    model = Course
+    template_name = 'courses/search_results.html'
+    context_object_name = 'courses'
+    paginate_by = 12
+    
+    def get_queryset(self):
+        query = self.request.GET.get('q', '').strip()
+        technology_filter = self.request.GET.get('technology', '')
+        difficulty_filter = self.request.GET.get('difficulty', '')
+        duration_filter = self.request.GET.get('duration', '')
+        
+        queryset = Course.objects.filter(is_active=True).select_related('technology')
+        
+        # Text search
+        if query:
+            queryset = queryset.filter(
+                Q(title__icontains=query) |
+                Q(description__icontains=query) |
+                Q(technology__name__icontains=query) |
+                Q(technology__description__icontains=query)
+            )
+        
+        # Technology filter
+        if technology_filter:
+            queryset = queryset.filter(technology__category=technology_filter)
+        
+        # Difficulty filter
+        if difficulty_filter:
+            queryset = queryset.filter(difficulty=difficulty_filter)
+        
+        # Duration filter
+        if duration_filter:
+            if duration_filter == 'short':
+                queryset = queryset.filter(estimated_duration__lte=5)
+            elif duration_filter == 'medium':
+                queryset = queryset.filter(estimated_duration__gt=5, estimated_duration__lte=10)
+            elif duration_filter == 'long':
+                queryset = queryset.filter(estimated_duration__gt=10)
+        
+        return queryset.distinct()
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        query = self.request.GET.get('q', '')
+        
+        context.update({
+            'search_query': query,
+            'technology_filter': self.request.GET.get('technology', ''),
+            'difficulty_filter': self.request.GET.get('difficulty', ''),
+            'duration_filter': self.request.GET.get('duration', ''),
+            'total_results': self.get_queryset().count(),
+            'technologies': Technology.TECHNOLOGY_CATEGORIES,
+            'durations': [
+                ('short', 'Short (0-5 hours)'),
+                ('medium', 'Medium (5-10 hours)'),
+                ('long', 'Long (10+ hours)')
+            ]
+        })
+        return context
+
+def search_suggestions(request):
+    """AJAX endpoint for search suggestions"""
+    query = request.GET.get('q', '').strip()
+    
+    if len(query) < 2:
+        return JsonResponse({'suggestions': []})
+    
+    # Search in courses and technologies
+    course_suggestions = Course.objects.filter(
+        Q(title__icontains=query) |
+        Q(description__icontains=query)
+    ).values('title', 'id')[:5]
+    
+    technology_suggestions = Technology.objects.filter(
+        Q(name__icontains=query) |
+        Q(description__icontains=query)
+    ).values('name', 'id')[:5]
+    
+    suggestions = []
+    
+    for course in course_suggestions:
+        suggestions.append({
+            'type': 'course',
+            'text': course['title'],
+            'url': f"/courses/{course['id']}/"
+        })
+    
+    for tech in technology_suggestions:
+        suggestions.append({
+            'type': 'technology',
+            'text': tech['name'],
+            'url': f"/courses/technology/{tech['id']}/"
+        })
+    
+    return JsonResponse({'suggestions': suggestions})

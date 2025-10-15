@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django.urls import reverse
 from django_ckeditor_5.fields import CKEditor5Field
 
@@ -168,7 +169,7 @@ class InteractiveExercise(models.Model):
         ('fill_blank', 'Fill in the Blanks'),
     ]
     
-    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='interactive_exercises')
+    lesson = models.ForeignKey('Lesson', on_delete=models.CASCADE, related_name='interactive_exercises')
     title = models.CharField(max_length=200)
     exercise_type = models.CharField(max_length=20, choices=EXERCISE_TYPES)
     instructions = CKEditor5Field('Instructions', config_name='default')
@@ -178,12 +179,39 @@ class InteractiveExercise(models.Model):
     options = models.JSONField(blank=True, null=True, help_text="Options for quiz/matching exercises")
     order = models.IntegerField(default=0)
     points = models.IntegerField(default=10)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         ordering = ['order']
+        verbose_name = 'Interactive Exercise'
+        verbose_name_plural = 'Interactive Exercises'
     
     def __str__(self):
         return f"{self.lesson.title} - {self.title}"
+    
+    def get_language_extension(self):
+        """Get file extension based on exercise content"""
+        if 'docker' in self.initial_code.lower() or 'FROM' in self.initial_code:
+            return 'Dockerfile'
+        elif 'apiVersion:' in self.initial_code:
+            return 'yaml'
+        elif 'pipeline' in self.initial_code:
+            return 'groovy'
+        else:
+            return 'txt'
+    
+    def get_total_attempts(self):
+        """Get total number of attempts for this exercise"""
+        return self.attempts.count()
+    
+    def get_success_rate(self):
+        """Calculate success rate for this exercise"""
+        total_attempts = self.get_total_attempts()
+        if total_attempts == 0:
+            return 0
+        successful_attempts = self.attempts.filter(is_correct=True).count()
+        return (successful_attempts / total_attempts) * 100
 
 class UserExerciseAttempt(models.Model):
     user = models.ForeignKey('users.CustomUser', on_delete=models.CASCADE)
@@ -197,6 +225,101 @@ class UserExerciseAttempt(models.Model):
     
     class Meta:
         unique_together = ['user', 'exercise']
-    
+        verbose_name = 'User Exercise Attempt'
+        verbose_name_plural = 'User Exercise Attempts'    
     def __str__(self):
         return f"{self.user.username} - {self.exercise.title}"
+
+
+class DiscussionForum(models.Model):
+    course = models.OneToOneField(Course, on_delete=models.CASCADE, related_name='forum')
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Forum: {self.course.title}"
+
+class DiscussionThread(models.Model):
+    forum = models.ForeignKey(DiscussionForum, on_delete=models.CASCADE, related_name='threads')
+    user = models.ForeignKey('users.CustomUser', on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)
+    content = CKEditor5Field('Content', config_name='extends')
+    is_pinned = models.BooleanField(default=False)
+    is_locked = models.BooleanField(default=False)
+    view_count = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-is_pinned', '-created_at']
+        verbose_name = 'Discussion Thread'
+        verbose_name_plural = 'Discussion Threads'    
+    def __str__(self):
+        return self.title
+
+class DiscussionPost(models.Model):
+    thread = models.ForeignKey(DiscussionThread, on_delete=models.CASCADE, related_name='posts')
+    user = models.ForeignKey('users.CustomUser', on_delete=models.CASCADE)
+    content = CKEditor5Field('Content', config_name='extends')
+    is_answer = models.BooleanField(default=False)
+    upvotes = models.IntegerField(default=0)
+    downvotes = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-is_answer', 'created_at']
+        verbose_name = 'Discussion Post'
+        verbose_name_plural = 'Discussion Posts'    
+    def __str__(self):
+        return f"Post by {self.user.username} in {self.thread.title}"
+    
+    def net_votes(self):
+        return self.upvotes - self.downvotes
+
+class UserVote(models.Model):
+    user = models.ForeignKey('users.CustomUser', on_delete=models.CASCADE)
+    post = models.ForeignKey(DiscussionPost, on_delete=models.CASCADE)
+    vote_type = models.CharField(max_length=10, choices=[('up', 'Upvote'), ('down', 'Downvote')])
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['user', 'post']
+        verbose_name = 'User Vote'
+        verbose_name_plural = 'User Votes'
+
+class UserExerciseAttempt(models.Model):
+    """Tracks user attempts and progress on interactive exercises"""
+    user = models.ForeignKey('users.CustomUser', on_delete=models.CASCADE, related_name='exercise_attempts')
+    exercise = models.ForeignKey('InteractiveExercise', on_delete=models.CASCADE, related_name='attempts')
+    code_submission = models.TextField(blank=True, help_text="User's code submission for code exercises")
+    answers = models.JSONField(blank=True, null=True, help_text="User's answers for quiz exercises")
+    is_correct = models.BooleanField(default=False)
+    score = models.IntegerField(default=0)
+    attempted_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        unique_together = ['user', 'exercise']
+        ordering = ['-attempted_at']
+        verbose_name = 'Exercise Attempt'
+        verbose_name_plural = 'Exercise Attempts'
+    
+    def __str__(self):
+        status = "✓" if self.is_correct else "✗"
+        return f"{status} {self.user.username} - {self.exercise.title} ({self.score} pts)"
+    
+    def mark_completed(self, is_correct=True, score=None):
+        """Mark attempt as completed"""
+        self.is_correct = is_correct
+        self.score = score or self.exercise.points if is_correct else 0
+        self.completed_at = timezone.now()
+        self.save()
+    
+    def get_time_spent(self):
+        """Calculate time spent on the exercise"""
+        if self.completed_at and self.attempted_at:
+            return self.completed_at - self.attempted_at
+        return None
