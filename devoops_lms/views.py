@@ -19,10 +19,4 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         # Add user progress data later
         return context
 
-class RoadmapView(TemplateView):
-    template_name = 'roadmap.html'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Add roadmap data later
-        return context

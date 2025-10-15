@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Learning Roadmap - DevOps MasterClass{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">DevOps Learning Roadmap</h1>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+            Follow this structured path to master DevOps technologies. Each phase builds upon the previous one, creating a comprehensive skill set.
+        </p>
+    </div>
+
+    <!-- Interactive Roadmap -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-semibold text-gray-900">Your Learning Journey</h2>
+            <div class="flex items-center space-x-4">
+                <span class="text-sm text-gray-500">
+                    {% if user.is_authenticated %}
+                    Overall Progress: <span class="font-semibold text-indigo-600">{{ overall_progress }}%</span>
+                    {% else %}
+                    <a href="{% url 'account_login' %}" class="text-indigo-600 hover:text-indigo-800">Login to track progress</a>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+
+        <!-- Roadmap Visualization -->
+        <div class="relative">
+            <!-- Progress Line -->
+            <div class="absolute left-8 top-0 bottom-0 w-1 bg-gray-200 transform -translate-x-1/2 z-0"></div>
+            
+            <!-- Phases -->
+            <div class="space-y-12 relative z-10">
+                {% for phase_num, technologies in technologies_by_phase.items %}
+                <div class="flex items-start">
+                    <!-- Phase Indicator -->
+                    <div class="flex-shrink-0 w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-6 relative z-10">
+                        {{ phase_num }}
+                    </div>
+                    
+                    <!-- Phase Content -->
+                    <div class="flex-1 bg-gray-50 rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl font-semibold text-gray-900">
+                                Phase {{ phase_num }}: 
+                                {% if phase_num == 1 %}Version Control & Collaboration
+                                {% elif phase_num == 2 %}CI/CD Automation
+                                {% elif phase_num == 3 %}Containerization & Orchestration
+                                {% elif phase_num == 4 %}Infrastructure as Code
+                                {% elif phase_num == 5 %}Monitoring & Observability
+                                {% elif phase_num == 6 %}Security & Quality
+                                {% endif %}
+                            </h3>
+                            {% if user_progress %}
+                            <div class="flex items-center space-x-2">
+                                <div class="w-24 bg-gray-200 rounded-full h-2">
+                                    <div class="bg-green-600 h-2 rounded-full" 
+                                         style="width: {{ phase_progress|default:0 }}%"></div>
+                                </div>
+                                <span class="text-sm text-gray-600">{{ phase_progress|default:0 }}%</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <p class="text-gray-600 mb-6">
+                            {% if phase_num == 1 %}
+                            Master the fundamentals of version control and team collaboration using Git, GitHub, and GitLab.
+                            {% elif phase_num == 2 %}
+                            Learn continuous integration and deployment with GitHub Actions, Jenkins, and CircleCI.
+                            {% elif phase_num == 3 %}
+                            Dive into containerization with Docker and orchestration with Kubernetes.
+                            {% elif phase_num == 4 %}
+                            Automate infrastructure provisioning with Terraform and Ansible.
+                            {% elif phase_num == 5 %}
+                            Implement monitoring and observability with Prometheus, Grafana, and ELK Stack.
+                            {% elif phase_num == 6 %}
+                            Ensure code quality and security with SonarQube and HashiCorp Vault.
+                            {% endif %}
+                        </p>
+                        
+                        <!-- Technologies Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {% for tech in technologies %}
+                            <a href="{% url 'technology_detail' tech.pk %}" 
+                               class="block p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition duration-300 {% if user_progress and tech.course.id in user_progress %}border-green-200 bg-green-50{% endif %}">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="font-semibold text-gray-900">{{ tech.name }}</h4>
+                                    {% if user_progress and tech.course.id in user_progress %}
+                                    <i class="fas fa-check-circle text-green-500"></i>
+                                    {% else %}
+                                    <i class="fas fa-circle text-gray-300"></i>
+                                    {% endif %}
+                                </div>
+                                <p class="text-sm text-gray-600 mb-2">{{ tech.description|truncatewords:10 }}</p>
+                                <div class="flex items-center justify-between text-xs text-gray-500">
+                                    <span>{{ tech.get_category_display }}</span>
+                                    <span>{{ tech.course.estimated_duration }}h</span>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="text-center">
+        <h2 class="text-2xl font-semibold text-gray-900 mb-4">Ready to Start Your DevOps Journey?</h2>
+        <p class="text-gray-600 mb-6">Begin with Phase 1 and build your skills step by step.</p>
+        <a href="{% url 'course_list' %}" class="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition duration-300 font-semibold text-lg">
+            Browse All Courses
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Roadmap interaction
+document.addEventListener('DOMContentLoaded', function() {
+    // Add hover effects to technology cards
+    const techCards = document.querySelectorAll('.bg-white.border');
+    techCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Animate progress bars
+    const progressBars = document.querySelectorAll('.bg-green-600');
+    progressBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0';
+        setTimeout(() => {
+            bar.style.transition = 'width 1s ease-in-out';
+            bar.style.width = width;
+        }, 100);
+    });
+});
+</script>
+{% endblock %}

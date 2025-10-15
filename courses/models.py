@@ -159,3 +159,44 @@ class WorkflowDiagram(models.Model):
     
     def __str__(self):
         return f"{self.technology.name} - {self.title}"
+    
+class InteractiveExercise(models.Model):
+    EXERCISE_TYPES = [
+        ('code', 'Code Exercise'),
+        ('quiz', 'Multiple Choice Quiz'),
+        ('matching', 'Matching Exercise'),
+        ('fill_blank', 'Fill in the Blanks'),
+    ]
+    
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='interactive_exercises')
+    title = models.CharField(max_length=200)
+    exercise_type = models.CharField(max_length=20, choices=EXERCISE_TYPES)
+    instructions = CKEditor5Field('Instructions', config_name='default')
+    initial_code = models.TextField(blank=True, help_text="Initial code for code exercises")
+    solution_code = models.TextField(blank=True, help_text="Expected solution for code exercises")
+    test_cases = models.JSONField(blank=True, null=True, help_text="Test cases for validation")
+    options = models.JSONField(blank=True, null=True, help_text="Options for quiz/matching exercises")
+    order = models.IntegerField(default=0)
+    points = models.IntegerField(default=10)
+    
+    class Meta:
+        ordering = ['order']
+    
+    def __str__(self):
+        return f"{self.lesson.title} - {self.title}"
+
+class UserExerciseAttempt(models.Model):
+    user = models.ForeignKey('users.CustomUser', on_delete=models.CASCADE)
+    exercise = models.ForeignKey(InteractiveExercise, on_delete=models.CASCADE)
+    code_submission = models.TextField(blank=True)
+    answers = models.JSONField(blank=True, null=True)
+    is_correct = models.BooleanField(default=False)
+    score = models.IntegerField(default=0)
+    attempted_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        unique_together = ['user', 'exercise']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.exercise.title}"

@@ -12,4 +12,9 @@ urlpatterns = [
     # Progress tracking URLs
     path('lesson/<int:lesson_id>/complete/', views.mark_lesson_complete, name='mark_lesson_complete'),
     path('course/<int:course_id>/progress/', views.get_course_progress, name='get_course_progress'),
+
+        # Exercise URLs (ADD THESE)
+    path('exercise/<int:exercise_id>/validate/', views.validate_exercise_solution, name='validate_exercise'),
+    path('exercise/<int:exercise_id>/quiz/', views.submit_quiz_answer, name='submit_quiz_answer'),
+    path('exercise/<int:pk>/', views.ExerciseDetailView.as_view(), name='exercise_detail'),
 ]

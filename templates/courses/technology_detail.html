@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ technology.name }} - DevOps MasterClass{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Technology Header -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+        <div class="p-8">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-4">
+                    <span class="px-3 py-1 bg-indigo-100 text-indigo-800 text-sm font-medium rounded-full">
+                        Phase {{ technology.phase }}
+                    </span>
+                    <span class="px-3 py-1 bg-gray-100 text-gray-800 text-sm font-medium rounded-full">
+                        {{ technology.get_category_display }}
+                    </span>
+                </div>
+                {% if technology.official_docs_url %}
+                <a href="{{ technology.official_docs_url }}" target="_blank" 
+                   class="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300">
+                    <i class="fas fa-book"></i>
+                    <span>Official Docs</span>
+                </a>
+                {% endif %}
+            </div>
+            
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">{{ technology.name }}</h1>
+            <p class="text-gray-600 text-lg mb-6">{{ technology.description }}</p>
+            
+            {% if technology.course %}
+            <div class="flex items-center space-x-4">
+                <a href="{% url 'course_detail' technology.course.pk %}" 
+                   class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition duration-300 font-semibold">
+                    Start Course
+                </a>
+                <span class="text-gray-500">
+                    {{ technology.course.estimated_duration }}h • {{ technology.course.lessons_count }} lessons
+                </span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main Content -->
+        <div class="lg:col-span-2">
+            <!-- Workflow Diagrams -->
+            {% if workflows %}
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-6">Workflow Diagrams</h2>
+                
+                <div class="space-y-8">
+                    {% for workflow in workflows %}
+                    <div class="border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">{{ workflow.title }}</h3>
+                            <p class="text-gray-600 text-sm mt-1">{{ workflow.description }}</p>
+                        </div>
+                        
+                        <div class="p-6">
+                            <div class="diagram-controls flex justify-between items-center mb-4">
+                                <span class="text-sm text-gray-500">Interactive Diagram</span>
+                                <div class="flex space-x-2">
+                                    <button onclick="zoomDiagram('diagram-{{ workflow.id }}', 'in')" 
+                                            class="px-3 py-1 text-xs bg-gray-200 rounded hover:bg-gray-300">
+                                        <i class="fas fa-search-plus"></i> Zoom In
+                                    </button>
+                                    <button onclick="zoomDiagram('diagram-{{ workflow.id }}', 'out')" 
+                                            class="px-3 py-1 text-xs bg-gray-200 rounded hover:bg-gray-300">
+                                        <i class="fas fa-search-minus"></i> Zoom Out
+                                    </button>
+                                    <button onclick="resetDiagram('diagram-{{ workflow.id }}')" 
+                                            class="px-3 py-1 text-xs bg-gray-200 rounded hover:bg-gray-300">
+                                        <i class="fas fa-sync"></i> Reset
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="mermaid" id="diagram-{{ workflow.id }}">
+                                {{ workflow.diagram_data }}
+                            </div>
+                            
+                            <div class="mt-4 p-4 bg-blue-50 rounded-lg">
+                                <h4 class="font-semibold text-blue-900 mb-2">How it works:</h4>
+                                <p class="text-blue-800 text-sm">This diagram shows the typical workflow for {{ technology.name }}. Click on the zoom controls to explore the details.</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Technology Overview -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-6">Technology Overview</h2>
+                
+                <div class="prose max-w-none">
+                    <h3>Key Features</h3>
+                    <ul>
+                        <li><strong>Category:</strong> {{ technology.get_category_display }}</li>
+                        <li><strong>Learning Phase:</strong> {{ technology.phase }}</li>
+                        <li><strong>Difficulty:</strong> {{ technology.course.difficulty|title }}</li>
+                        <li><strong>Estimated Duration:</strong> {{ technology.course.estimated_duration }} hours</li>
+                    </ul>
+                    
+                    <h3>Learning Path</h3>
+                    <p>This technology is part of Phase {{ technology.phase }} in your DevOps journey. Master these concepts before moving to more advanced topics.</p>
+                    
+                    <h3>Real-world Applications</h3>
+                    <p>{{ technology.name }} is widely used in modern software development for:</p>
+                    <ul>
+                        {% if technology.category == 'vcs' %}
+                        <li>Version control and collaboration</li>
+                        <li>Code review and quality assurance</li>
+                        <li>Release management</li>
+                        {% elif technology.category == 'ci_cd' %}
+                        <li>Automated testing and deployment</li>
+                        <li>Continuous integration pipelines</li>
+                        <li>Release automation</li>
+                        {% elif technology.category == 'container' %}
+                        <li>Application containerization</li>
+                        <li>Environment consistency</li>
+                        <li>Microservices architecture</li>
+                        {% elif technology.category == 'orchestration' %}
+                        <li>Container orchestration</li>
+                        <li>Auto-scaling and self-healing</li>
+                        <li>Service discovery and load balancing</li>
+                        {% elif technology.category == 'iac' %}
+                        <li>Infrastructure automation</li>
+                        <li>Environment provisioning</li>
+                        <li>Configuration management</li>
+                        {% elif technology.category == 'monitoring' %}
+                        <li>Application performance monitoring</li>
+                        <li>Log aggregation and analysis</li>
+                        <li>Alerting and notification</li>
+                        {% elif technology.category == 'security' %}
+                        <li>Code quality and security scanning</li>
+                        <li>Secrets management</li>
+                        <li>Access control and authentication</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                <div class="space-y-3">
+                    {% if technology.course %}
+                    <a href="{% url 'course_detail' technology.course.pk %}" 
+                       class="block w-full bg-indigo-600 text-white text-center py-3 rounded-lg hover:bg-indigo-700 transition duration-300 font-semibold">
+                        Start Course
+                    </a>
+                    {% endif %}
+                    
+                    {% if technology.official_docs_url %}
+                    <a href="{{ technology.official_docs_url }}" target="_blank" 
+                       class="block w-full bg-gray-100 text-gray-700 text-center py-3 rounded-lg hover:bg-gray-200 transition duration-300">
+                        View Documentation
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'roadmap' %}" 
+                       class="block w-full bg-green-100 text-green-700 text-center py-3 rounded-lg hover:bg-green-200 transition duration-300">
+                        View Learning Roadmap
+                    </a>
+                </div>
+            </div>
+
+            <!-- Related Technologies -->
+            {% if related_courses %}
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Related Technologies</h3>
+                <div class="space-y-3">
+                    {% for course in related_courses %}
+                    <a href="{% url 'technology_detail' course.technology.pk %}" 
+                       class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition duration-300">
+                        <span class="font-medium text-gray-700">{{ course.technology.name }}</span>
+                        <span class="text-sm text-gray-500">{{ course.technology.get_category_display }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Phase Progress -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Phase {{ technology.phase }} Progress</h3>
+                <div class="space-y-4">
+                    {% for phase_tech in technologies_in_phase %}
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-700 {% if phase_tech.name == technology.name %}font-semibold text-indigo-600{% endif %}">
+                            {{ phase_tech.name }}
+                        </span>
+                        <div class="flex items-center space-x-2">
+                            {% if phase_tech.name == technology.name %}
+                            <span class="px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full">Current</span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Upcoming</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Diagram interaction functions
+function zoomDiagram(diagramId, direction) {
+    const diagram = document.getElementById(diagramId);
+    const currentScale = diagram.style.transform ? parseFloat(diagram.style.transform.replace('scale(', '').replace(')', '')) : 1;
+    
+    if (direction === 'in') {
+        diagram.style.transform = `scale(${currentScale * 1.2})`;
+    } else {
+        diagram.style.transform = `scale(${currentScale * 0.8})`;
+    }
+}
+
+function resetDiagram(diagramId) {
+    const diagram = document.getElementById(diagramId);
+    diagram.style.transform = 'scale(1)';
+}
+
+// Re-render mermaid diagrams when needed
+function refreshDiagrams() {
+    mermaid.contentLoaded();
+}
+
+// Initialize interactive elements
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click handlers to diagram nodes for better interaction
+    const diagramNodes = document.querySelectorAll('.mermaid .node');
+    diagramNodes.forEach(node => {
+        node.style.cursor = 'pointer';
+        node.addEventListener('click', function() {
+            this.classList.toggle('bg-yellow-100');
+        });
+    });
+});
+</script>
+{% endblock %}

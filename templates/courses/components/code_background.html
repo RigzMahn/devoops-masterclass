@@ -1,0 +1,218 @@
+<div class="interactive-exercise bg-white rounded-xl shadow-lg border border-gray-200 mb-6" data-exercise-id="{{ exercise.id }}">
+    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+            <h4 class="text-lg font-semibold text-gray-900">{{ exercise.title }}</h4>
+            <div class="flex items-center space-x-2">
+                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">{{ exercise.get_exercise_type_display }}</span>
+                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">{{ exercise.points }} points</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="p-6">
+        <!-- Instructions -->
+        <div class="prose prose-sm max-w-none mb-6">
+            {{ exercise.instructions|safe }}
+        </div>
+        
+        {% if exercise.exercise_type == 'code' %}
+        <!-- Code Editor -->
+        <div class="code-playground mb-6">
+            <div class="code-editor">
+                <div class="code-header flex justify-between items-center">
+                    <span>main.{{ exercise.get_language_extension }}</span>
+                    <div class="flex space-x-2">
+                        <button onclick="formatCode('editor-{{ exercise.id }}')" class="text-xs hover:text-gray-300">
+                            <i class="fas fa-broom mr-1"></i>Format
+                        </button>
+                        <button onclick="resetCode('editor-{{ exercise.id }}')" class="text-xs hover:text-gray-300">
+                            <i class="fas fa-redo mr-1"></i>Reset
+                        </button>
+                    </div>
+                </div>
+                <div class="code-content">
+                    <textarea id="editor-{{ exercise.id }}" class="w-full h-64 bg-transparent text-white font-mono resize-none focus:outline-none"
+                              spellcheck="false">{{ exercise.initial_code }}</textarea>
+                </div>
+            </div>
+            
+            <!-- Controls -->
+            <div class="flex justify-between items-center mt-4">
+                <div class="flex space-x-2">
+                    <button onclick="runCode('editor-{{ exercise.id }}', '{{ exercise.id }}')" 
+                            class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-300">
+                        <i class="fas fa-play mr-2"></i>Run Code
+                    </button>
+                    <button onclick="submitSolution('editor-{{ exercise.id }}', '{{ exercise.id }}')" 
+                            class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-300">
+                        <i class="fas fa-check mr-2"></i>Submit Solution
+                    </button>
+                </div>
+                <button onclick="showSolution('{{ exercise.id }}')" 
+                        class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                    <i class="fas fa-lightbulb mr-1"></i>Show Hint
+                </button>
+            </div>
+            
+            <!-- Output -->
+            <div id="output-{{ exercise.id }}" class="mt-4 hidden">
+                <div class="bg-gray-800 text-white rounded-lg p-4 font-mono text-sm">
+                    <div class="flex justify-between items-center mb-2">
+                        <span>Output:</span>
+                        <button onclick="clearOutput('{{ exercise.id }}')" class="text-xs hover:text-gray-300">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div id="output-content-{{ exercise.id }}"></div>
+                </div>
+            </div>
+            
+            <!-- Results -->
+            <div id="results-{{ exercise.id }}" class="mt-4 hidden">
+                <div class="p-4 rounded-lg">
+                    <div id="results-content-{{ exercise.id }}"></div>
+                </div>
+            </div>
+        </div>
+        
+        {% elif exercise.exercise_type == 'quiz' %}
+        <!-- Quiz Exercise -->
+        <div class="quiz-exercise">
+            <form id="quiz-form-{{ exercise.id }}">
+                <div class="space-y-4">
+                    {% for option in exercise.options.choices %}
+                    <div class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                        <input type="radio" id="choice-{{ exercise.id }}-{{ forloop.counter }}" 
+                               name="answer" value="{{ option.value }}" class="text-indigo-600">
+                        <label for="choice-{{ exercise.id }}-{{ forloop.counter }}" class="flex-1 cursor-pointer">
+                            {{ option.text }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="mt-6">
+                    <button type="button" onclick="submitQuiz('{{ exercise.id }}')" 
+                            class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition duration-300">
+                        Submit Answer
+                    </button>
+                </div>
+            </form>
+            
+            <div id="quiz-feedback-{{ exercise.id }}" class="mt-4 hidden"></div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Code execution and validation functions
+function runCode(editorId, exerciseId) {
+    const code = document.getElementById(editorId).value;
+    const outputDiv = document.getElementById(`output-${exerciseId}`);
+    const outputContent = document.getElementById(`output-content-${exerciseId}`);
+    
+    // Simple client-side code execution simulation
+    // In a real application, this would call a backend API
+    try {
+        // For demonstration - simulate output
+        outputContent.innerHTML = '<div class="text-green-400">✓ Code executed successfully!</div>';
+        outputDiv.classList.remove('hidden');
+    } catch (error) {
+        outputContent.innerHTML = `<div class="text-red-400">✗ Error: ${error.message}</div>`;
+        outputDiv.classList.remove('hidden');
+    }
+}
+
+function submitSolution(editorId, exerciseId) {
+    const code = document.getElementById(editorId).value;
+    
+    // Validate code against test cases
+    fetch(`/courses/exercise/${exerciseId}/validate/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ code: code })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const resultsDiv = document.getElementById(`results-${exerciseId}`);
+        const resultsContent = document.getElementById(`results-content-${exerciseId}`);
+        
+        if (data.success) {
+            resultsContent.innerHTML = `
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle text-green-500 text-xl mr-3"></i>
+                        <div>
+                            <h4 class="font-semibold text-green-800">Congratulations!</h4>
+                            <p class="text-green-700 text-sm">Your solution passed all test cases.</p>
+                            <p class="text-green-600 text-xs mt-1">Score: ${data.score}/${data.max_score}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            resultsContent.innerHTML = `
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-times-circle text-red-500 text-xl mr-3"></i>
+                        <div>
+                            <h4 class="font-semibold text-red-800">Solution needs improvement</h4>
+                            <p class="text-red-700 text-sm">${data.message}</p>
+                            ${data.hint ? `<p class="text-red-600 text-xs mt-1">Hint: ${data.hint}</p>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        resultsDiv.classList.remove('hidden');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function formatCode(editorId) {
+    const editor = document.getElementById(editorId);
+    const code = editor.value;
+    
+    // Simple formatting simulation
+    // In real implementation, use a proper formatter like Prettier
+    const formatted = code.replace(/\n\s*\n/g, '\n\n').trim();
+    editor.value = formatted;
+}
+
+function resetCode(editorId) {
+    const editor = document.getElementById(editorId);
+    editor.value = document.querySelector(`[data-exercise-id="${editorId.split('-')[1]}"]`).dataset.initialCode;
+}
+
+function showSolution(exerciseId) {
+    // Show hint or solution (implementation depends on exercise type)
+    alert('Hint: Check the official documentation for best practices!');
+}
+
+function clearOutput(exerciseId) {
+    document.getElementById(`output-${exerciseId}`).classList.add('hidden');
+}
+
+// Utility function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
